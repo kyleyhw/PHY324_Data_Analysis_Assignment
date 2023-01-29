@@ -22,19 +22,54 @@ class EstimatorAnalysis():
     def plot_histograms(self, show=False, save=False):
 
         fig, (ax1, ax2) = plt.subplots(2, 1)
-        self.number_of_bins = 100
 
-        self.uncalibrated_bin_heights, self.uncalibrated_bin_edges, _ = plt.hist(x=self.estimator_results, bins=self.number_of_bins, label='data')
-        self.uncalibrated_bin_centers = 0.5 * (self.uncalibrated_bin_edges[:-1] + self.uncalibrated_bin_edges[1:])
-        self.uncalibrated_errors = np.sqrt(self.estimator_results)
-        self.uncalibrated_errors = np.where(self.uncalibrated_errors == 0, 1, self.uncalibrated_errors)
+        self.number_of_bins = 40
 
-        fit_function = fit_functions.Gaussian()
+        self.uncalibrated_bin_heights, self.uncalibrated_bin_edges, _ = ax1.hist(x=self.estimator_results, bins=self.number_of_bins, label='data', color='k', histtype='step', range=(0, 0.0004)) # HARDCODED RANGE
+        self.uncalibrated_bin_centers = (self.uncalibrated_bin_edges[:-1] + self.uncalibrated_bin_edges[1:]) / 2
 
-        popt, pcov = curve_fit(fit_function, self.uncalibrated_bin_centers, self.uncalibrated_bin_heights)
+        self.count_errors = np.sqrt(self.uncalibrated_bin_heights)
+        self.count_errors = np.where(self.count_errors == 0, 1, self.count_errors)
 
-        fitted_function = fitted_functions.Gaussian(*popt)
+        fit_function_uncalibrated = fit_functions.Gaussian()
 
-        self.calibrated_bin_heights, self.calibrated_bin_edges =
+        popt, pcov = curve_fit(fit_function_uncalibrated, self.uncalibrated_bin_centers, self.uncalibrated_bin_heights, sigma=self.count_errors, absolute_sigma=True, p0=(100,0.00025,0.00005)) # HARDCODED P0 INITIAL GUESS
+        self.error_in_uncalibrated_fit_parameters = np.sqrt(np.diag(pcov))
+
+        (self.uncalibrated_gaussian_scale, self.uncalibrated_gaussian_mu, self.uncalibrated_gaussian_sigma) = tuple(popt)
+
+        fitted_function_uncalibrated = fitted_functions.Gaussian(*popt)
 
 
+        self.calibration_energy = 1e4 # keV
+        self.calibration_constant = self.calibration_energy / self.uncalibrated_gaussian_mu
+        self.calibrated_estimator_results = self.estimator_results * self.calibration_constant
+
+        self.calibrated_bin_heights, self.calibrated_bin_edges, _ = ax2.hist(x=self.calibrated_estimator_results, bins=self.number_of_bins, label='calibrated data', color='k', histtype='step')
+        self.calibrated_bin_centers = (self.calibrated_bin_edges[:-1] + self.calibrated_bin_edges[1:]) / 2
+
+        fit_function_calibrated = fit_functions.Gaussian()
+
+        popt, pcov = curve_fit(fit_function_calibrated, self.calibrated_bin_centers, self.calibrated_bin_heights, sigma=self.count_errors, absolute_sigma=True)
+        self.error_in_calibrated_fit_parameters = np.sqrt(np.diag(pcov))
+
+        (self.calibrated_gaussian_scale, self.calibrated_gaussian_mu, self.calibrated_gaussian_sigma) = tuple(popt)
+
+        fitted_function_calibrated = fitted_functions.Gaussian(*popt)
+
+
+        ax1.errorbar(self.uncalibrated_bin_centers, self.uncalibrated_bin_heights, yerr=self.count_errors, fmt='none', c='k')
+        ax2.errorbar(self.calibrated_bin_centers, self.calibrated_bin_heights, yerr=self.count_errors, fmt='none', c='k')
+
+        x_for_plotting_uncalibrated = np.linspace(*ax1.get_xlim(), 10000)
+        x_for_plotting_calibrated = np.linspace(*ax2.get_xlim(), 10000)
+
+        ax1.plot(x_for_plotting_uncalibrated, fitted_function_uncalibrated(x_for_plotting_uncalibrated))
+        ax2.plot(x_for_plotting_calibrated, fitted_function_calibrated(x_for_plotting_calibrated))
+
+
+        if show:
+            fig.show()
+
+        if save:
+            fig.savefig('histograms/%s_histograms.png'%self.Estimator.name)

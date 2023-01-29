@@ -1,11 +1,22 @@
 import numpy as np
 
-class MinMax():
-    def __init__(self, data):
-        self.data = data
+class MaximumValue():
+    def __init__(self):
+        self.name = 'Maximumvalue'
 
-    def __call__(self):
-        estimate = np.max(self.data) - np.min(self.data)
+    def __call__(self, data):
+        estimate = np.max(data)
         return estimate
 
-class
+
+class MinMax():
+    def __init__(self):
+        self.name = 'MinMax'
+
+    def __call__(self, data):
+        estimate = np.max(data) - np.min(data)
+        return estimate
+
+class MaxBaseline():
+    def __init__(self):
+        self.name = 'MaxBaseline'

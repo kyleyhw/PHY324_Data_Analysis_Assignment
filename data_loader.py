@@ -10,6 +10,7 @@ class Data():
 
     def __call__(self, event):
         self.current_event_data = self.full_data['evt_%i' % event]
+        return self.current_event_data
 
 
     def test_plot(self, event):
