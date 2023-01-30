@@ -85,7 +85,7 @@ class LimitedRangeIntegral():
 
 class BaselineSubtractedLimitedRangeIntegral():
     def __init__(self):
-        self.name = 'limited_range_integral'
+        self.name = 'baseline_subtracted_limited_range_integral'
         self.range = None # this is the histogram range
         self.number_of_bins = 40
         self.p0 = None

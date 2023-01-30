@@ -50,7 +50,7 @@ def single_estimate_signal():
 
 
 
-# run_from_arr()
+run_from_arr()
 
 # run_single_estimator()
 
