@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
+font = {'family' : 'DejaVu Sans',
+        'weight' : 'normal',
+        'size'   : 22}
+rc('font', **font)
 from matplotlib.offsetbox import AnchoredText
 from scipy.optimize import curve_fit
 
@@ -10,17 +14,14 @@ from curve_fit_funcs import CurveFitFuncs
 
 cff = CurveFitFuncs()
 
-font = {'family' : 'DejaVu Sans',
-        'weight' : 'normal',
-        'size'   : 22}
-rc('font', **font)
+
 
 class EstimatorAnalysis():
     def __init__(self, Estimator, Data):
         self.Data = Data
         self.Estimator = Estimator
-        self.estimator_results = np.zeros(self.Data.length, dtype=float)
 
+        self.estimator_results = np.zeros(self.Data.length, dtype=float)
         for i in range(self.Data.length):
             self.estimator_results[i] = self.Estimator(self.Data(i))
 
@@ -28,9 +29,7 @@ class EstimatorAnalysis():
 
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(32, 18))
 
-        self.number_of_bins = 40
-
-        self.uncalibrated_bin_heights, self.uncalibrated_bin_edges, _ = ax1.hist(x=self.estimator_results, bins=self.number_of_bins, label='data', color='k', histtype='step', range=self.Estimator.range) # HARDCODED RANGE
+        self.uncalibrated_bin_heights, self.uncalibrated_bin_edges, _ = ax1.hist(x=self.estimator_results, bins=self.Estimator.number_of_bins, label='data', color='k', histtype='step', range=self.Estimator.range) # HARDCODED RANGE
         self.uncalibrated_bin_centers = (self.uncalibrated_bin_edges[:-1] + self.uncalibrated_bin_edges[1:]) / 2
 
         self.count_errors = np.sqrt(self.uncalibrated_bin_heights)
@@ -52,7 +51,7 @@ class EstimatorAnalysis():
         self.calibration_factor_error = (self.uncalibrated_gaussian_mu_error/self.uncalibrated_gaussian_mu) * self.calibration_factor
         self.calibrated_estimator_results = self.estimator_results * self.calibration_factor
 
-        self.calibrated_bin_heights, self.calibrated_bin_edges, _ = ax2.hist(x=self.calibrated_estimator_results, bins=self.number_of_bins, label='data', color='k', histtype='step')
+        self.calibrated_bin_heights, self.calibrated_bin_edges, _ = ax2.hist(x=self.calibrated_estimator_results, bins=self.Estimator.number_of_bins, label='data', color='k', histtype='step')
         self.calibrated_bin_centers = (self.calibrated_bin_edges[:-1] + self.calibrated_bin_edges[1:]) / 2
 
         fit_function_calibrated = fit_functions.Gaussian()
@@ -102,7 +101,7 @@ class EstimatorAnalysis():
         ax1.set_title('Uncalibrated data with Gaussian fit for %s estimator' % self.Estimator.name)
         ax1.legend(loc='upper right')
 
-        information_on_ax1 = 'number of bins = ' + str(self.number_of_bins) + \
+        information_on_ax1 = 'number of bins = ' + str(self.Estimator.number_of_bins) + \
                              '\n$\mu$ = ' + cff.to_sf(self.uncalibrated_gaussian_mu, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.uncalibrated_gaussian_mu_error, sf=1) + self.Estimator.unit + \
                              '\n$\sigma$ = ' + cff.to_sf(self.uncalibrated_gaussian_sigma, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.uncalibrated_gaussian_sigma_error, sf=1) + self.Estimator.unit + \
                              '\n$\chi^2$ / DOF = ' + cff.to_sf(self.uncalibrated_raw_chi_squared, sf=info_sigfigs) + ' / ' + str(self.uncalibrated_dof) + ' = ' + cff.to_sf(self.uncalibrated_reduced_chi_squared, sf=info_sigfigs) + \
@@ -117,7 +116,7 @@ class EstimatorAnalysis():
         ax2.set_title('Calibrated data with Gaussian fit for %s estimator' % self.Estimator.name)
         ax2.legend(loc='upper right')
 
-        information_on_ax2 = 'number of bins = ' + str(self.number_of_bins) + \
+        information_on_ax2 = 'number of bins = ' + str(self.Estimator.number_of_bins) + \
                              '\ncalibration factor = ' + cff.to_sf(self.calibration_factor, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.calibration_factor_error, sf=1) + '%f (%s ) / mV' % (self.calibration_factor, self.Estimator.unit) + \
                              '\n$\mu$ = ' + cff.to_sf(self.calibrated_gaussian_mu, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.calibrated_gaussian_mu_error, sf=1) + ' keV' + \
                              '\n$\sigma$ = ' + cff.to_sf(self.calibrated_gaussian_sigma, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.uncalibrated_gaussian_sigma_error, sf=1) + ' keV' + \
@@ -129,7 +128,7 @@ class EstimatorAnalysis():
 
 
         print('Estimator %s' % self.Estimator.name)
-        print('Calibration factor = %f $\pm$ %f / %s  / mV' % (self.calibration_factor, self.calibration_factor_error, self.Estimator.unit))
+        print('Calibration factor = %f $\pm$ %f / (%s / mV )' % (self.calibration_factor, self.calibration_factor_error, self.Estimator.unit))
         print('Energy resolution = %f $\pm$ %f keV' % (self.calibrated_gaussian_sigma, self.calibrated_gaussian_sigma_error))
         print('Fit $\chi^2$ probability %f' %self.calibrated_chi2_prob)
 
@@ -141,5 +140,5 @@ class EstimatorAnalysis():
             fig.show()
 
         if save:
-            fig.savefig('histograms/%s_histograms.png'%self.Estimator.name)
+            fig.savefig('estimator_histograms/%s_histograms.png'%self.Estimator.name)
 

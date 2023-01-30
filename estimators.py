@@ -6,6 +6,7 @@ class MaximumValue():
     def __init__(self):
         self.name = 'maximum_value'
         self.range = (0, 0.4)
+        self.number_of_bins = 40
         self.p0 = (0, 100, 0.25, 0.05)
         self.unit = ' mV'
 
@@ -17,6 +18,7 @@ class MinMax():
     def __init__(self):
         self.name = 'min_max'
         self.range = None
+        self.number_of_bins = 40
         self.p0 = (0, 150, 0.3, 0.05)
         self.unit = ' mV'
 
@@ -28,6 +30,7 @@ class MaxBaseline():
     def __init__(self):
         self.name = 'max_baseline'
         self.range = None
+        self.number_of_bins = 40
         self.p0 = (0, 200, 0.25, 0.05)
         self.unit = ' mV'
 
@@ -43,6 +46,7 @@ class SimpleIntegral():
     def __init__(self):
         self.name = 'simple_integral'
         self.range = None
+        self.number_of_bins = 40
         self.p0 = None
         self.unit = ' mV ms'
 
@@ -54,6 +58,7 @@ class BaselineSubtractedIntegral():
     def __init__(self):
         self.name = 'baseline_subtracted_integral'
         self.range = None
+        self.number_of_bins = 40
         self.p0 = None
         self.unit = ' mV ms'
 
@@ -67,6 +72,7 @@ class LimitedRangeIntegral():
     def __init__(self):
         self.name = 'limited_range_integral'
         self.range = None # this is the histogram range
+        self.number_of_bins = 40
         self.p0 = None
         self.unit = ' mV ms'
 
@@ -81,6 +87,7 @@ class BaselineSubtractedLimitedRangeIntegral():
     def __init__(self):
         self.name = 'limited_range_integral'
         self.range = None # this is the histogram range
+        self.number_of_bins = 40
         self.p0 = None
         self.unit = ' mV ms'
 
@@ -102,6 +109,22 @@ class Template():
         results /= np.max(results)
         self.results = results
 
+        import pickle as pkl
+
+        with open('noise_p3.pkl', 'rb') as file:
+            full_noise_data = pkl.load(file)
+
+        noise_stds = np.zeros(len(full_noise_data), dtype=float)
+
+        for event in range(1000):
+            current_event = full_noise_data['evt_%i' % event]
+            noise_stds[event] = np.std(current_event)
+
+        error = np.average(noise_stds)
+        self.errors = np.zeros(len(data), dtype=float) + error
+
+
+
     def __call__(self, x, A):
         return A * np.interp(x, self.t, self.results)
 
@@ -109,6 +132,7 @@ class FitToGivenTemplate():
     def __init__(self):
         self.name = 'fit_to_pulse_template'
         self.range = None
+        self.number_of_bins = 40
         self.p0 = None
         self.unit = ' mV'
 
@@ -119,10 +143,8 @@ class FitToGivenTemplate():
 
         template = Template(data, tau_rise, tau_fall, pulse_start)
 
-        baseline_data = data[:1000]
-        error = np.std(baseline_data)
-        errors = np.zeros(len(data), dtype=float) + error
-        popt, pcov = curve_fit(template, np.arange(0, len(data)), data, sigma=errors, absolute_sigma=True, p0=(2))
+
+        popt, pcov = curve_fit(template, np.arange(0, len(data)), data, sigma=template.errors, absolute_sigma=True, p0=(2))
         A = popt[0]
         return A
 
