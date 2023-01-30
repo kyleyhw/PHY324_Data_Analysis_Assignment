@@ -5,8 +5,11 @@ import estimator_analysis
 Data = data_loader.Data('calibration_p3.pkl')
 # Data.test_plot(2)
 
-Estimator = estimators.MaximumValue()
+estimators_arr = [estimators.MaximumValue(), estimators.MinMax(), estimators.MaxBaseline()]
 
-estimator_analysis = estimator_analysis.EstimatorAnalysis(Estimator, Data)
+# Estimator = estimators.MaximumValue()
+for Estimator in estimators_arr:
+    estimator_analyze = estimator_analysis.EstimatorAnalysis(Estimator, Data)
+    estimator_analyze.plot_histograms(show=False, save=True)
 
-estimator_analysis.plot_histograms(show=True, save=True)
+print('finished')

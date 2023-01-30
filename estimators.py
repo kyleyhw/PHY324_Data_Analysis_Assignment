@@ -2,7 +2,7 @@ import numpy as np
 
 class MaximumValue():
     def __init__(self):
-        self.name = 'Maximumvalue'
+        self.name = 'MaximumValue'
         self.range = (0, 0.4)
         self.p0 = (0, 100, 0.25, 0.05)
 
@@ -25,7 +25,7 @@ class MaxBaseline():
     def __init__(self):
         self.name = 'MaxBaseline'
         self.range = None
-        self.p0 = None
+        self.p0 = (0, 200, 0.25, 0.05)
 
     def __call__(self, data):
         baseline = np.mean(data[:1000])

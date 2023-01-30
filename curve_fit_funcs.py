@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats as spstats
 
 class CurveFitFuncs():
     def __init__(self):
@@ -11,7 +12,9 @@ class CurveFitFuncs():
         ax.errorbar(x, y, yerr=yerr, xerr=xerr, linestyle='None', capsize=2, label=label, marker=marker)
     
     def to_sf(self, num, sf=4):
-        return (f'{num:.{sf}g}')
+        result = '%.*g' % (sf, num)
+        # result = (f'{num:.{sf}g}')
+        return result
 
 
 
@@ -35,3 +38,7 @@ class CurveFitFuncs():
         denom = y_uncertainty
         dof = len(yarr_measured) - params_in_model
         return self.sum_squared_ratio(numer, denom) / dof
+
+    def chi2_probability(self, raw_chi2, dof):
+        chi2_prob = (1 - spstats.chi2.cdf(raw_chi2, dof))
+        return chi2_prob

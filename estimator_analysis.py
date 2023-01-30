@@ -26,7 +26,7 @@ class EstimatorAnalysis():
 
     def plot_histograms(self, show=False, save=False):
 
-        fig, (ax1, ax2) = plt.subplots(2, 1)
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(32, 18))
 
         self.number_of_bins = 40
 
@@ -46,10 +46,10 @@ class EstimatorAnalysis():
         fitted_function_uncalibrated = fitted_functions.Gaussian(*popt)
 
 
-        self.calibration_energy = 1e4 # keV
-        self.calibration_constant = self.calibration_energy / self.uncalibrated_gaussian_mu
-        print(self.calibration_constant)
-        self.calibrated_estimator_results = self.estimator_results * self.calibration_constant
+        self.calibration_energy = 10 # keV
+        self.calibration_factor = self.calibration_energy / self.uncalibrated_gaussian_mu
+        print(self.calibration_factor)
+        self.calibrated_estimator_results = self.estimator_results * self.calibration_factor
 
         self.calibrated_bin_heights, self.calibrated_bin_edges, _ = ax2.hist(x=self.calibrated_estimator_results, bins=self.number_of_bins, label='data', color='k', histtype='step')
         self.calibrated_bin_centers = (self.calibrated_bin_edges[:-1] + self.calibrated_bin_edges[1:]) / 2
@@ -57,7 +57,7 @@ class EstimatorAnalysis():
         fit_function_calibrated = fit_functions.Gaussian()
 
         if self.Estimator.p0 != None:
-            calibrated_p0 = tuple(value * scale_factor for value, scale_factor in zip(self.Estimator.p0, (1, 1, self.calibration_constant, self.calibration_constant)))
+            calibrated_p0 = tuple(value * scale_factor for value, scale_factor in zip(self.Estimator.p0, (1, 1, self.calibration_factor, self.calibration_factor)))
         else:
             calibrated_p0 = None
 
@@ -75,11 +75,13 @@ class EstimatorAnalysis():
         self.uncalibrated_raw_chi_squared = cff.calc_raw_chi_squared(self.uncalibrated_bin_heights, self.predicted_uncalibrated_bin_heights, self.count_errors)
         self.uncalibrated_dof = cff.calc_dof(self.uncalibrated_bin_heights, fit_function_uncalibrated.num_of_params)
         self.uncalibrated_reduced_chi_squared = self.uncalibrated_raw_chi_squared / self.uncalibrated_dof
+        self.uncalibrated_chi2_prob = cff.chi2_probability(self.uncalibrated_raw_chi_squared, self.uncalibrated_dof)
 
         self.predicted_calibrated_bin_heights = fitted_function_calibrated(self.calibrated_bin_centers)
         self.calibrated_raw_chi_squared = cff.calc_raw_chi_squared(self.calibrated_bin_heights, self.predicted_calibrated_bin_heights, self.count_errors)
         self.calibrated_dof = cff.calc_dof(self.calibrated_bin_heights, fit_function_calibrated.num_of_params)
         self.calibrated_reduced_chi_squared = self.calibrated_raw_chi_squared / self.calibrated_dof
+        self.calibrated_chi2_prob = cff.chi2_probability(self.calibrated_raw_chi_squared, self.calibrated_dof)
 
         cff.baseplot_errorbars(ax1, self.uncalibrated_bin_centers, self.uncalibrated_bin_heights, yerr=self.count_errors)
         cff.baseplot_errorbars(ax2, self.calibrated_bin_centers, self.calibrated_bin_heights, yerr=self.count_errors)
@@ -95,14 +97,14 @@ class EstimatorAnalysis():
 
         ax1.set_ylabel('events')
         ax1.set_xlabel('detector response amplitude / mV')
-        ax1.set_title('Uncalibrated data with Gaussian fit')
+        ax1.set_title('Uncalibrated data with Gaussian fit for %s estimator' % self.Estimator.name)
         ax1.legend(loc='upper right')
 
         information_on_ax1 = 'number of bins = ' + str(self.number_of_bins) + \
                              '\n$\mu$ = ' + cff.to_sf(self.uncalibrated_gaussian_mu, sf=info_sigfigs) + ' mV' + \
                              '\n$\sigma$ = ' + cff.to_sf(self.uncalibrated_gaussian_sigma, sf=info_sigfigs) + ' mV' + \
                              '\n$\chi^2$ / DOF = ' + cff.to_sf(self.uncalibrated_raw_chi_squared, sf=info_sigfigs) + ' / ' + str(self.uncalibrated_dof) + ' = ' + cff.to_sf(self.uncalibrated_reduced_chi_squared, sf=info_sigfigs) + \
-                             '\n$\chi^2$ prob = '
+                             '\n$\chi^2$ prob = ' + cff.to_sf(self.uncalibrated_chi2_prob, sf=info_sigfigs)
 
         ax1_text = AnchoredText(information_on_ax1, loc='upper left', frameon=False, prop=dict(fontsize=info_fontsize))
         ax1.add_artist(ax1_text)
@@ -110,18 +112,27 @@ class EstimatorAnalysis():
 
         ax2.set_ylabel('events')
         ax2.set_xlabel('particle energy / keV')
-        ax2.set_title('Calibrated data with Gaussian fit')
+        ax2.set_title('Calibrated data with Gaussian fit for  %s estimator' % self.Estimator.name)
         ax2.legend(loc='upper right')
 
         information_on_ax2 = 'number of bins = ' + str(self.number_of_bins) + \
                              '\n$\mu$ = ' + cff.to_sf(self.calibrated_gaussian_mu, sf=info_sigfigs) + ' keV' + \
                              '\n$\sigma$ = ' + cff.to_sf(self.calibrated_gaussian_sigma, sf=info_sigfigs) + ' keV' + \
                              '\n$\chi^2$ / DOF = ' + cff.to_sf(self.calibrated_raw_chi_squared, sf=info_sigfigs) + ' / ' + str(self.calibrated_dof) + ' = ' + cff.to_sf(self.calibrated_reduced_chi_squared, sf=info_sigfigs) + \
-                             '\n$\chi^2$ prob = '
+                             '\n$\chi^2$ prob = ' + cff.to_sf(self.calibrated_chi2_prob, sf=info_sigfigs)
 
         ax2_text = AnchoredText(information_on_ax2, loc='upper left', frameon=False, prop=dict(fontsize=info_fontsize))
         ax2.add_artist(ax2_text)
 
+
+        print('Estimator %s' % self.Estimator.name)
+        print('Calibration factor = %f keV / mV' % self.calibration_factor)
+        print('Energy resolution = $f keV' % self.calibrated_gaussian_sigma)
+        print('Fit $\chi^2$ probability %f' %self.calibrated_chi2_prob)
+
+        print()
+        print()
+        print()
 
         if show:
             fig.show()
