@@ -42,13 +42,14 @@ class EstimatorAnalysis():
         self.error_in_uncalibrated_fit_parameters = np.sqrt(np.diag(pcov))
 
         (self.uncalibrated_gaussian_base, self.uncalibrated_gaussian_scale, self.uncalibrated_gaussian_mu, self.uncalibrated_gaussian_sigma) = tuple(popt)
+        (self.uncalibrated_gaussian_base_error, self.uncalibrated_gaussian_scale_error, self.uncalibrated_gaussian_mu_error, self.uncalibrated_gaussian_sigma_error) = tuple(self.error_in_uncalibrated_fit_parameters)
 
         fitted_function_uncalibrated = fitted_functions.Gaussian(*popt)
 
 
         self.calibration_energy = 10 # keV
         self.calibration_factor = self.calibration_energy / self.uncalibrated_gaussian_mu
-        print(self.calibration_factor)
+        self.calibration_factor_error = (self.uncalibrated_gaussian_mu_error/self.uncalibrated_gaussian_mu) * self.calibration_factor
         self.calibrated_estimator_results = self.estimator_results * self.calibration_factor
 
         self.calibrated_bin_heights, self.calibrated_bin_edges, _ = ax2.hist(x=self.calibrated_estimator_results, bins=self.number_of_bins, label='data', color='k', histtype='step')
@@ -65,6 +66,7 @@ class EstimatorAnalysis():
         self.error_in_calibrated_fit_parameters = np.sqrt(np.diag(pcov))
 
         (self.calibrated_gaussian_base, self.calibrated_gaussian_scale, self.calibrated_gaussian_mu, self.calibrated_gaussian_sigma) = tuple(popt)
+        (self.calibrated_gaussian_base_error, self.calibrated_gaussian_scale_error, self.calibrated_gaussian_mu_error, self.calibrated_gaussian_sigma_error) = tuple(self.error_in_calibrated_fit_parameters)
 
         fitted_function_calibrated = fitted_functions.Gaussian(*popt)
 
@@ -101,8 +103,8 @@ class EstimatorAnalysis():
         ax1.legend(loc='upper right')
 
         information_on_ax1 = 'number of bins = ' + str(self.number_of_bins) + \
-                             '\n$\mu$ = ' + cff.to_sf(self.uncalibrated_gaussian_mu, sf=info_sigfigs) + ' mV' + \
-                             '\n$\sigma$ = ' + cff.to_sf(self.uncalibrated_gaussian_sigma, sf=info_sigfigs) + ' mV' + \
+                             '\n$\mu$ = ' + cff.to_sf(self.uncalibrated_gaussian_mu, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.uncalibrated_gaussian_mu_error, sf=1) + self.Estimator.unit + \
+                             '\n$\sigma$ = ' + cff.to_sf(self.uncalibrated_gaussian_sigma, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.uncalibrated_gaussian_sigma_error, sf=1) + self.Estimator.unit + \
                              '\n$\chi^2$ / DOF = ' + cff.to_sf(self.uncalibrated_raw_chi_squared, sf=info_sigfigs) + ' / ' + str(self.uncalibrated_dof) + ' = ' + cff.to_sf(self.uncalibrated_reduced_chi_squared, sf=info_sigfigs) + \
                              '\n$\chi^2$ prob = ' + cff.to_sf(self.uncalibrated_chi2_prob, sf=info_sigfigs)
 
@@ -112,12 +114,13 @@ class EstimatorAnalysis():
 
         ax2.set_ylabel('events')
         ax2.set_xlabel('particle energy / keV')
-        ax2.set_title('Calibrated data with Gaussian fit for  %s estimator' % self.Estimator.name)
+        ax2.set_title('Calibrated data with Gaussian fit for %s estimator' % self.Estimator.name)
         ax2.legend(loc='upper right')
 
         information_on_ax2 = 'number of bins = ' + str(self.number_of_bins) + \
-                             '\n$\mu$ = ' + cff.to_sf(self.calibrated_gaussian_mu, sf=info_sigfigs) + ' keV' + \
-                             '\n$\sigma$ = ' + cff.to_sf(self.calibrated_gaussian_sigma, sf=info_sigfigs) + ' keV' + \
+                             '\ncalibration factor = ' + cff.to_sf(self.calibration_factor, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.calibration_factor_error, sf=1) + '%f (%s ) / mV' % (self.calibration_factor, self.Estimator.unit) + \
+                             '\n$\mu$ = ' + cff.to_sf(self.calibrated_gaussian_mu, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.calibrated_gaussian_mu_error, sf=1) + ' keV' + \
+                             '\n$\sigma$ = ' + cff.to_sf(self.calibrated_gaussian_sigma, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.uncalibrated_gaussian_sigma_error, sf=1) + ' keV' + \
                              '\n$\chi^2$ / DOF = ' + cff.to_sf(self.calibrated_raw_chi_squared, sf=info_sigfigs) + ' / ' + str(self.calibrated_dof) + ' = ' + cff.to_sf(self.calibrated_reduced_chi_squared, sf=info_sigfigs) + \
                              '\n$\chi^2$ prob = ' + cff.to_sf(self.calibrated_chi2_prob, sf=info_sigfigs)
 
@@ -126,8 +129,8 @@ class EstimatorAnalysis():
 
 
         print('Estimator %s' % self.Estimator.name)
-        print('Calibration factor = %f keV / mV' % self.calibration_factor)
-        print('Energy resolution = $f keV' % self.calibrated_gaussian_sigma)
+        print('Calibration factor = %f $\pm$ %f / %s  / mV' % (self.calibration_factor, self.calibration_factor_error, self.Estimator.unit))
+        print('Energy resolution = %f $\pm$ %f keV' % (self.calibrated_gaussian_sigma, self.calibrated_gaussian_sigma_error))
         print('Fit $\chi^2$ probability %f' %self.calibrated_chi2_prob)
 
         print()
