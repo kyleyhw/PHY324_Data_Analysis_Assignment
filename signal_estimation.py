@@ -41,6 +41,8 @@ class SignalFitter():
         self.count_errors = np.sqrt(self.bin_heights)
         self.count_errors = np.where(self.count_errors == 0, 1, self.count_errors)
 
+        ax.set_title('Histogram of signal data for %s estimator' % self.Estimator.name)
+
 
 
         if show:
