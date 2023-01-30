@@ -32,15 +32,15 @@ def fit_pulse(x, A):
 with open("calibration_p3.pkl","rb") as file:
     calibration_data=pickle.load(file)
 
-pulse_template = pulse_shape(20,80)
-plt.plot(pulse_template/2000, label='Pulse Template', color='r')
-for itrace in range(10):
-    plt.plot(calibration_data['evt_%i'%itrace], alpha=0.3)
-plt.xlabel('Sample Index')
-plt.ylabel('Readout (V)')
-plt.title('Calibration data (10 sets)')
-plt.legend(loc=1)
-plt.show()
+# pulse_template = pulse_shape(20,80)
+# plt.plot(pulse_template/2000, label='Pulse Template', color='r')
+# for itrace in range(10):
+#     plt.plot(calibration_data['evt_%i'%itrace], alpha=0.3)
+# plt.xlabel('Sample Index')
+# plt.ylabel('Readout (V)')
+# plt.title('Calibration data (10 sets)')
+# plt.legend(loc=1)
+# plt.show()
 """ 
 This shows the first 10 data sets on top of each other.
 Always a good idea to look at some of your data before analysing it!
@@ -107,6 +107,8 @@ plt.errorbar(bin_centers1, n1, yerr=sig1, fmt='none', c='k')
 
 popt1, pcov1 = curve_fit(myGauss, bin_centers1, n1, 
              sigma = sig1, p0=(100,0.25,0.05,5), absolute_sigma=True)
+
+print(popt1)
 n1_fit = myGauss(bin_centers1, *popt1)
 """
 n1_fit is our best fit line using our data points.
