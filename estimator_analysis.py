@@ -93,7 +93,7 @@ class EstimatorAnalysis():
         ax1.plot(x_for_plotting_uncalibrated, fitted_function_uncalibrated(x_for_plotting_uncalibrated), label='fit')
         ax2.plot(x_for_plotting_calibrated, fitted_function_calibrated(x_for_plotting_calibrated), label='fit')
 
-        info_sigfigs = 5
+        info_sigfigs = 4
         info_fontsize = 22
 
         ax1.set_ylabel('events')
@@ -119,7 +119,7 @@ class EstimatorAnalysis():
         information_on_ax2 = 'number of bins = ' + str(self.Estimator.number_of_bins) + \
                              '\ncalibration factor = ' + cff.to_sf(self.calibration_factor, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.calibration_factor_error, sf=1) + '%f (%s ) / mV' % (self.calibration_factor, self.Estimator.unit) + \
                              '\n$\mu_c$ = ' + cff.to_sf(self.calibrated_gaussian_mu, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.calibrated_gaussian_mu_error, sf=1) + ' keV' + \
-                             '\n$\sigma_c$ = ' + cff.to_sf(self.calibrated_gaussian_sigma, sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.uncalibrated_gaussian_sigma_error, sf=1) + ' keV' + \
+                             '\n$\sigma_c$ = ' + cff.to_sf(np.abs(self.calibrated_gaussian_sigma), sf=info_sigfigs) + '$ \pm $' + cff.to_sf(self.uncalibrated_gaussian_sigma_error, sf=1) + ' keV' + \
                              '\n$\chi^2$ / DOF = ' + cff.to_sf(self.calibrated_raw_chi_squared, sf=info_sigfigs) + ' / ' + str(self.calibrated_dof) + ' = ' + cff.to_sf(self.calibrated_reduced_chi_squared, sf=info_sigfigs) + \
                              '\n$\chi^2$ prob = ' + cff.to_sf(self.calibrated_chi2_prob, sf=info_sigfigs)
 
@@ -127,14 +127,16 @@ class EstimatorAnalysis():
         ax2.add_artist(ax2_text)
 
 
-        print('Estimator %s' % self.Estimator.name)
-        print('Calibration factor = %f $\pm$ %f / (%s / mV )' % (self.calibration_factor, self.calibration_factor_error, self.Estimator.unit))
-        print('Energy resolution = %f $\pm$ %f keV' % (self.calibrated_gaussian_sigma, self.calibrated_gaussian_sigma_error))
-        print('Fit $\chi^2$ probability %f' %self.calibrated_chi2_prob)
+        # print('Estimator %s' % self.Estimator.name)
+        # print('Calibration factor = %f $\pm$ %f / (%s / mV )' % (self.calibration_factor, self.calibration_factor_error, self.Estimator.unit))
+        # print('Energy resolution = %f $\pm$ %f keV' % (self.calibrated_gaussian_sigma, self.calibrated_gaussian_sigma_error))
+        # print('Fit $\chi^2$ probability %f' %self.calibrated_chi2_prob)
 
-        print()
-        print()
-        print()
+        print('%s & $ %f \pm %f  / (\%s / \mV ) $ & $%f \pm %f \keV $ & $ %f $' % (self.Estimator.name, self.calibration_factor, self.calibration_factor_error, self.Estimator.unit, self.calibrated_gaussian_sigma, self.calibrated_gaussian_sigma_error, self.calibrated_chi2_prob))
+
+        # print()
+        # print()
+        # print()
 
         if show:
             fig.show()

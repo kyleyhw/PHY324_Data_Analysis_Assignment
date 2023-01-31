@@ -33,13 +33,15 @@ with open("calibration_p3.pkl","rb") as file:
     calibration_data=pickle.load(file)
 
 pulse_template = pulse_shape(20,80)
+plt.figure(figsize=(16,9))
 plt.plot(pulse_template/2000, label='Pulse Template', color='r')
 for itrace in range(10):
     plt.plot(calibration_data['evt_%i'%itrace], alpha=0.3)
-plt.xlabel('Sample Index')
-plt.ylabel('Readout (V)')
+plt.xlabel('sample index')
+plt.ylabel('detector voltage / V')
 plt.title('Calibration data (10 sets)')
 plt.legend(loc=1)
+plt.savefig('template_on_data_plot.png')
 plt.show()
 """ 
 This shows the first 10 data sets on top of each other.

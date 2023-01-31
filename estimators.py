@@ -35,7 +35,7 @@ class MaxBaseline():
         self.unit = ' mV'
 
     def __call__(self, data):
-        baseline = np.mean(data[:1000])
+        baseline = np.mean(data[:1024])
         max = np.max(data)
         estimate = max - baseline
         return estimate
@@ -63,9 +63,9 @@ class BaselineSubtractedIntegral():
         self.unit = ' mV ms'
 
     def __call__(self, data):
-        integral = sp.integrate.trapz(data, dx=1) # 4 ms = 0.0004s divided into 4096 samples
-        baseline = np.mean(data[:1000])
-        estimate = integral-baseline
+        baseline = np.mean(data[:1024])
+        integral = sp.integrate.trapz(data-baseline, dx=1) # 4 ms = 0.0004s divided into 4096 samples
+        estimate = integral
         return estimate
 
 class LimitedRangeIntegral():
@@ -77,8 +77,8 @@ class LimitedRangeIntegral():
         self.unit = ' mV ms'
 
     def __call__(self, data):
-        integration_min = 1000
-        integration_max = 1102 # 100us signal width / 4ms * 4096 samples = 102 samples
+        integration_min = 1024
+        integration_max = 1126 # 100us signal width / 4ms * 4096 samples = 102 samples
         integral = sp.integrate.trapz(data[integration_min:integration_max])
         estimate = integral
         return estimate
@@ -92,11 +92,12 @@ class BaselineSubtractedLimitedRangeIntegral():
         self.unit = ' mV ms'
 
     def __call__(self, data):
-        integration_min = 1000
-        integration_max = 1102 # 100us signal width / 4ms * 4096 samples = 102 samples
-        integral = sp.integrate.trapz(data[integration_min:integration_max])
-        baseline = np.mean(data[:1000])
-        estimate = integral - baseline
+        integration_min = 1024
+        integration_max = 1126 # 100us signal width / 4ms * 4096 samples = 102 samples
+        baseline = np.mean(data[:1024])
+        integral = sp.integrate.trapz(data[integration_min:integration_max] - baseline)
+        baseline = np.mean(data[:1024])
+        estimate = integral
         return estimate
 
 
@@ -128,7 +129,7 @@ class Template():
     def __call__(self, x, A):
         return A * np.interp(x, self.t, self.results)
 
-class FitToGivenTemplate():
+class FitToPulseTemplate():
     def __init__(self):
         self.name = 'fit_to_pulse_template'
         self.range = None

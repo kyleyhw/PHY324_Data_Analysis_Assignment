@@ -11,7 +11,7 @@ files = ['calibration_p3.pkl', 'noise_p3.pkl', 'signal_p3.pkl']
 estimators_arr = [estimators.MaximumValue(), estimators.MinMax(), estimators.MaxBaseline(),
                   estimators.SimpleIntegral(), estimators.BaselineSubtractedIntegral(),
                   estimators.LimitedRangeIntegral(), estimators.BaselineSubtractedLimitedRangeIntegral(),
-                  estimators.FitToGivenTemplate()]
+                  estimators.FitToPulseTemplate()]
 
 def run_from_arr():
     Data = data_loader.Data(files[0])
@@ -32,25 +32,35 @@ def run_single_estimator():
 
 
 def arr_estimate_signal():
-    Data = data_loader.Data(files[2])
+    CalibrationData = data_loader.Data(files[0])
+    SignalData = data_loader.Data(files[2])
 
     for Estimator in estimators_arr:
-        SignalFitter = signal_estimation.SignalFitter(Estimator, Data)
-        SignalFitter.plot_histogram(show=False, save=True)
+        estimator_analyze = estimator_analysis.EstimatorAnalysis(Estimator, CalibrationData)
+        estimator_analyze.plot_histograms(show=False, save=False)
+
+        SignalFitter = signal_estimation.SignalFitter(Estimator, SignalData, estimator_analyze.calibration_factor, estimator_analyze.calibration_factor_error)
+
+        SignalFitter.plot_histogram_without_fit(show=False, save=True)
 
     print('finished')
 
 def single_estimate_signal():
-    Estimator = estimators.FitToGivenTemplate()
-    Data = data_loader.Data(files[2])
+    Estimator = estimators.BaselineSubtractedLimitedRangeIntegral()
+    CalibrationData = data_loader.Data(files[0])
+    SignalData = data_loader.Data(files[2])
 
-    SignalFitter = signal_estimation.SignalFitter(Estimator, Data)
+    estimator_analyze = estimator_analysis.EstimatorAnalysis(Estimator, CalibrationData)
+    estimator_analyze.plot_histograms(show=False, save=False)
 
-    SignalFitter.plot_histogram(show=True, save=True)
+    SignalFitter = signal_estimation.SignalFitter(Estimator, SignalData, estimator_analyze.calibration_factor, estimator_analyze.calibration_factor_error)
+
+    SignalFitter.plot_histogram_with_fit(show=False, save=True)
+    SignalFitter.plot_histogram_with_triple_fit(show=False, save=True)
 
 
 
-run_from_arr()
+# run_from_arr()
 
 # run_single_estimator()
 
